@@ -707,43 +707,68 @@ local function startKillerQueenVoidFight(state)
     end
 end
 
+-- Shared Avdol lobby TP — called by both Auto Raid and Auto Void when PlaceId == 14890802310
+local function doAvdolLobbyTP()
+    local hrp = getHRP()
+    if not hrp then return end
+    local stand = getSummonedStand()
+    if stand and stand ~= "" then
+        pcall(keypress, TAB_KEY); task.wait(0.1); pcall(keyrelease, TAB_KEY); task.wait(0.3)
+    end
+    pcall(function() hrp.Position = Vector3.new(333.79, 876, 1021); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end)
+    task.wait(0.5)
+    pcall(keypress, E_KEY); task.wait(0.5); pcall(keyrelease, E_KEY)
+    pcall(keypress, ONE_KEY); task.wait(0.1); pcall(keyrelease, ONE_KEY)
+    task.wait(0.1)
+    hrp = getHRP()
+    if hrp then pcall(function() hrp.Position = Vector3.new(348, 876, 1010); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end) end
+end
+
 local function startAvdolLobby(state, fightFn)
     if game.PlaceId == AVDOL_FIGHT_PLACE then fightFn(state); return end
     if game.PlaceId ~= RAID_PLACE_ID then warn("[Avdol] Wrong game. PlaceId must be " .. RAID_PLACE_ID); return end
     while state.alive do
-        local hrp = getHRP()
-        if not hrp then task.wait(0.1) continue end
-        local stand = getSummonedStand()
-        if stand and stand ~= "" then pcall(keypress, TAB_KEY); task.wait(0.1); pcall(keyrelease, TAB_KEY); task.wait(0.3) end
-        pcall(function() hrp.Position = Vector3.new(333.79,876,1021); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end)
-        task.wait(0.5)
-        pcall(keypress, E_KEY); task.wait(0.5); pcall(keyrelease, E_KEY)
-        pcall(keypress, ONE_KEY); task.wait(0.1); pcall(keyrelease, ONE_KEY)
-        task.wait(0.1)
-        hrp = getHRP()
-        if hrp then pcall(function() hrp.Position = Vector3.new(348,876,1010); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end) end
+        if not getHRP() then task.wait(0.1) continue end
+        if game.PlaceId == 14890802310 then doAvdolLobbyTP() end
         task.wait(15)
     end
+end
+
+-- Shared Jotaro lobby TP — called by both Auto Raid and Auto Void when PlaceId == 14890802310
+local function doJotaroLobbyTP()
+    local hrp = getHRP()
+    if not hrp then return end
+    local stand = getSummonedStand()
+    if stand and stand ~= "" then
+        pcall(keypress, TAB_KEY); task.wait(0.1); pcall(keyrelease, TAB_KEY); task.wait(0.3)
+    end
+    pcall(function() hrp.Position = Vector3.new(1072, 884, 208); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end)
+    task.wait(0.5)
+    pcall(keypress, E_KEY); task.wait(1); pcall(keyrelease, E_KEY)
+    task.wait(0.5)
+    pcall(keypress, ONE_KEY); task.wait(0.1); pcall(keyrelease, ONE_KEY)
 end
 
 local function startJotaroLobby(state, fightFn)
     if game.PlaceId == AVDOL_FIGHT_PLACE then fightFn(state); return end
     if game.PlaceId ~= RAID_PLACE_ID then warn("[Jotaro] Wrong game. PlaceId must be " .. RAID_PLACE_ID); return end
     while state.alive do
-        local hrp = getHRP()
-        if not hrp then task.wait(0.1) continue end
-        local stand = getSummonedStand()
-        if stand and stand ~= "" then pcall(keypress, TAB_KEY); task.wait(0.1); pcall(keyrelease, TAB_KEY); task.wait(0.3) end
-        pcall(function() hrp.Position = Vector3.new(1072,884,208); hrp.AssemblyLinearVelocity = Vector3.new(0,0,0) end)
-        task.wait(0.5)
-        pcall(keypress, E_KEY); task.wait(1); pcall(keyrelease, E_KEY)
-        task.wait(0.5)
-        pcall(keypress, ONE_KEY); task.wait(0.1); pcall(keyrelease, ONE_KEY)
+        if not getHRP() then task.wait(0.1) continue end
+        if game.PlaceId == 14890802310 then doJotaroLobbyTP() end
         task.wait(15)
     end
 end
 
 local function startAvdolRaid(state)
+    if game.PlaceId == 14890802310 then
+        -- use shared lobby TP functions for both bosses
+        while state.alive do
+            if not getHRP() then task.wait(0.1) continue end
+            if raidBoss == "Jotaro" then doJotaroLobbyTP() else doAvdolLobbyTP() end
+            task.wait(15)
+        end
+        return
+    end
     if raidBoss == "Jotaro" then startJotaroLobby(state, startAnubisRaidFight)
     else startAvdolLobby(state, startAnubisRaidFight) end
 end
@@ -774,6 +799,15 @@ local voidBoss   = config.voidBoss
 local voidMethod = config.voidMethod
 
 local function startAvdolVoid(state)
+    if game.PlaceId == 14890802310 then
+        -- use shared lobby TP functions for both bosses
+        while state.alive do
+            if not getHRP() then task.wait(0.1) continue end
+            if voidBoss == "Jotaro" then doJotaroLobbyTP() else doAvdolLobbyTP() end
+            task.wait(15)
+        end
+        return
+    end
     local lobbyFn = (voidBoss == "Jotaro") and startJotaroLobby or startAvdolLobby
     if voidMethod == "Killer Queen" then lobbyFn(state, startKillerQueenVoidFight)
     else lobbyFn(state, startVampireVoidFight) end
