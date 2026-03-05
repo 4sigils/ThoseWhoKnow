@@ -412,10 +412,10 @@ local tpData = {
     {
         section = "Raids",
         entries = {
-            { name = "Avdol Raid",  pos = Vector3.new(333.79, 876,  1021)  },
-            { name = "Jotaro Raid", pos = Vector3.new(1072,   884,  208)   },
-            { name = "Kira Raid",   pos = Vector3.new(0,      876,  0)     },
-            { name = "Dio Raid",    pos = Vector3.new(200,    876,  300)   },
+            { name = "Avdol Raid",  pos = Vector3.new(334,  876, 1021) },
+            { name = "Jotaro Raid", pos = Vector3.new(1076, 884,  206) },
+            { name = "Kira Raid",   pos = Vector3.new(1025, 875, -651) },
+            { name = "Dio Raid",    pos = Vector3.new(2803, 950,  746) },
         },
     },
     {
@@ -423,44 +423,58 @@ local tpData = {
         entries = {
             { name = "Prison Escapee", pos = Vector3.new(840,  886,  -625) },
             { name = "Delinquent",     pos = Vector3.new(1483, 875,  -568) },
-            { name = "Muhammad Avdol", pos = Vector3.new(786,  1016, -8)   },
+            { name = "Muhammad Avdol", pos = Vector3.new(786,  1016,   -8) },
             { name = "Stand User",     pos = Vector3.new(500,  880,  -400) },
         },
     },
     {
         section = "Locations",
         entries = {
-            { name = "Spawn",          pos = Vector3.new(0,    876,  0)    },
-            { name = "Prison",         pos = Vector3.new(840,  886,  -625) },
-            { name = "City",           pos = Vector3.new(1483, 875,  -568) },
-            { name = "Desert",         pos = Vector3.new(600,  880,  800)  },
+            { name = "Spawn",  pos = Vector3.new(0,   876,    0) },
+            { name = "Prison", pos = Vector3.new(840, 886, -625) },
+            { name = "City",   pos = Vector3.new(1483, 875, -568) },
+            { name = "Desert", pos = Vector3.new(600,  880,  800) },
         },
     },
     {
         section = "Bosses",
         entries = {
-            { name = "Avdol",          pos = Vector3.new(786,  1016, -8)   },
-            { name = "Jotaro",         pos = Vector3.new(1072, 884,  208)  },
-            { name = "Kira",           pos = Vector3.new(0,    876,  0)    },
-            { name = "Dio",            pos = Vector3.new(200,  876,  300)  },
+            { name = "Avdol",  pos = Vector3.new(786,  1016,   -8) },
+            { name = "Jotaro", pos = Vector3.new(1072,  884,  208) },
+            { name = "Kira",   pos = Vector3.new(0,     876,    0) },
+            { name = "Dio",    pos = Vector3.new(200,   876,  300) },
         },
     },
     {
         section = "Bus Stops",
         entries = {
-            { name = "Bus Stop 1",     pos = Vector3.new(100,  876,  200)  },
-            { name = "Bus Stop 2",     pos = Vector3.new(300,  876,  500)  },
-            { name = "Bus Stop 3",     pos = Vector3.new(700,  876,  -100) },
-            { name = "Bus Stop 4",     pos = Vector3.new(1200, 876,  400)  },
+            { name = "Bus Stop 1",  pos = Vector3.new(1287, 875,  -534) },
+            { name = "Bus Stop 2",  pos = Vector3.new(1217, 875,   -58) },
+            { name = "Bus Stop 3",  pos = Vector3.new(622,  887,  -439) },
+            { name = "Bus Stop 4",  pos = Vector3.new(2214, 875,  -394) },
+            { name = "Bus Stop 5",  pos = Vector3.new(1673, 875,  -214) },
+            { name = "Bus Stop 6",  pos = Vector3.new(2597, 875,  -119) },
+            { name = "Bus Stop 7",  pos = Vector3.new(1266, 875, -1117) },
+            { name = "Bus Stop 8",  pos = Vector3.new(676,  889,   144) },
+            { name = "Bus Stop 9",  pos = Vector3.new(2504, 875,    97) },
+            { name = "Bus Stop 10", pos = Vector3.new(137,  892,   318) },
+            { name = "Bus Stop 11", pos = Vector3.new(160,  892,    13) },
+            { name = "Bus Stop 12", pos = Vector3.new(-181, 892,    46) },
+            { name = "Bus Stop 13", pos = Vector3.new(1642, 875,    77) },
+            { name = "Bus Stop 14", pos = Vector3.new(655,  908,  1183) },
+            { name = "Bus Stop 15", pos = Vector3.new(1902, 875,   170) },
+            { name = "Bus Stop 16", pos = Vector3.new(-1456, 910,  542) },
+            { name = "Bus Stop 17", pos = Vector3.new(1169, 909,  1246) },
+            { name = "Bus Stop 18", pos = Vector3.new(1918, 933,  1439) },
+            { name = "Bus Stop 19", pos = Vector3.new(1323, 875,   304) },
         },
     },
     {
         section = "Gang Territories",
         entries = {
-            { name = "East Side",      pos = Vector3.new(900,  876,  -300) },
-            { name = "West Side",      pos = Vector3.new(-200, 876,  400)  },
-            { name = "North End",      pos = Vector3.new(400,  876,  1200) },
-            { name = "South Docks",    pos = Vector3.new(600,  876,  -900) },
+            { name = "Port",         pos = Vector3.new(-1506, 886, 1332) },
+            { name = "Alleyway",     pos = Vector3.new(1488,  875, -706) },
+            { name = "Gas Station",  pos = Vector3.new(2308,  875,  404) },
         },
     },
 }
@@ -489,7 +503,7 @@ for _, group in ipairs(tpData) do
         for _, e in ipairs(group.entries) do
             if e.name == selected then
                 pcall(function()
-                    hrp.CFrame = CFrame.new(e.pos)
+                    hrp.Position = e.pos
                     hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                 end)
                 Win:Notify("Teleported to " .. e.name, "Teleports", 2)
