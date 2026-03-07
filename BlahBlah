@@ -434,21 +434,18 @@ local function startPvE(state)
             task.wait(1)
             pcall(keypress, PVE_E_KEY); task.wait(1); pcall(keyrelease, PVE_E_KEY)
 
-            -- Poll for either a successful queue or "already in mission" notice
-            local elapsed, step = 0, 1/60
+            -- Poll every second for up to 5 seconds for either notification
             local gotQueue, gotAlready = false, false
-            while elapsed < 2 do
+            for _ = 1, 5 do
                 for _, child in ipairs(holderFrame:GetChildren()) do
                     if child:IsA("Frame") then
-                        if child.Name:sub(1, #QUEUE_PREFIX) == QUEUE_PREFIX then
-                            gotQueue = true; break
-                        elseif child.Name:sub(1, #ALREADY_PREFIX) == ALREADY_PREFIX then
-                            gotAlready = true; break
-                        end
+                        local n = child.Name
+                        if n:find(QUEUE_PREFIX, 1, true) then gotQueue = true; break
+                        elseif n:find(ALREADY_PREFIX, 1, true) then gotAlready = true; break end
                     end
                 end
                 if gotQueue or gotAlready then break end
-                task.wait(step); elapsed = elapsed + step
+                task.wait(1)
             end
 
             if gotQueue then
@@ -470,13 +467,15 @@ local function startPvE(state)
                     print("[PvE] Found active mission content — rejoining mid-mission.")
                     queued = true
                 else
-                    -- Nothing found: Esc → R → Enter to force-respawn out of stuck state
-                    print("[PvE] No active content found — Esc → R → Enter to reset...")
-                    pcall(keypress, 0x1B);  task.wait(0.1); pcall(keyrelease, 0x1B) -- Esc
-                    task.wait(0.5)
-                    pcall(keypress, 0x52);  task.wait(0.1); pcall(keyrelease, 0x52) -- R
-                    task.wait(0.5)
-                    pcall(keypress, 0x0D);  task.wait(0.1); pcall(keyrelease, 0x0D) -- Enter
+                    -- Nothing found: teleport into the void to force a respawn
+                    print("[PvE] No active content found — voiding to force respawn...")
+                    local hrp = getHRP()
+                    if hrp then
+                        pcall(function()
+                            hrp.Position = Vector3.new(hrp.Position.X, -500, hrp.Position.Z)
+                            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        end)
+                    end
                     task.wait(2) -- give time for respawn before retrying
                 end
             else
@@ -486,29 +485,38 @@ local function startPvE(state)
         if not state.alive then break end
         print("[PvE] Queued! Detecting mission type...")
 
-        -- ── 2. Detect mission type — questbrick spawns first, NPCs spawn after ─────────
-        -- Check for questbrick first (spawns immediately). If none found after a
-        -- short window, assume exterminate and wait for highlighted NPCs to appear.
+        -- ── 2. Detect mission type ────────────────────────────
+        -- Scan every 0.5s for up to 5 seconds for a questbrick or highlighted NPCs.
+        -- If nothing is found, void out as a failsafe and restart the loop.
         print("[PvE] Detecting mission type...")
         local isExterminate = nil
-        local scanTimeout = 8
-        local scanElapsed = 0
 
-        -- First pass: look for a questbrick within 8 seconds
-        while state.alive and scanElapsed < scanTimeout do
+        for _ = 1, 10 do
+            if not state.alive then break end
             if hasActiveQuestbrick() then
                 isExterminate = false
                 print("[PvE] Questbrick found — quest mission.")
                 break
+            elseif #getPveTargets() > 0 then
+                isExterminate = true
+                print("[PvE] Highlighted NPCs found — exterminate mission.")
+                break
             end
             task.wait(0.5)
-            scanElapsed = scanElapsed + 0.5
         end
 
-        -- No questbrick found — must be exterminate
+        -- Nothing found after 5 seconds — void out and restart
         if isExterminate == nil then
-            isExterminate = true
-            print("[PvE] No questbrick found — exterminate mission.")
+            print("[PvE] Nothing detected after 5s — voiding to reset...")
+            local hrp = getHRP()
+            if hrp then
+                pcall(function()
+                    hrp.Position = Vector3.new(hrp.Position.X, -500, hrp.Position.Z)
+                    hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                end)
+            end
+            task.wait(2)
+            continue
         end
 
         -- ── 3a. Exterminate branch ────────────────────────────
@@ -1440,7 +1448,7 @@ task.spawn(function()
     end
     if #ordered == 4 then
         for i = 1, 4 do tabs[i] = ordered[i] end
-        for i = 5, #tabs do tabs[i] = nil end
-        Win._openTab = ordered[1]
+z
+        Win._openTab = ordered[1]c1
     end
 end)
