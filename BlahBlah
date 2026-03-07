@@ -390,13 +390,33 @@ local function getPveTargets()
     return t
 end
 
+local function hasActiveQuestbrick()
+    local found = false
+    pcall(function()
+        for _, qb in ipairs(Workspace.Effects:GetChildren()) do
+            local isKira = false
+            pcall(function()
+                local title = qb["Quest Marker"].Image.Title
+                if title and title.Text and title.Text:find("Yoshikage Kira") then isKira = true end
+            end)
+            if not isKira then
+                local pos = nil
+                pcall(function() pos = qb.questbrick.Position end)
+                if pos then found = true end
+            end
+        end
+    end)
+    return found
+end
+
 local function startPvE(state)
     loadPveOffsets()
 
     local holderFrame = player.PlayerGui:WaitForChild("Notifications"):WaitForChild("holder")
 
-    local QUEUE_PREFIX  = "Joined PvE Mission Queue"
-    local EXTERM_PREFIX = "Exterminate the targets"
+    local QUEUE_PREFIX   = "Joined PvE Mission Queue"
+    local ALREADY_PREFIX = "You are already in an active mission."
+    local EXTERM_PREFIX  = "Exterminate the targets"
 
     while state.alive do
 
@@ -413,8 +433,55 @@ local function startPvE(state)
             end
             task.wait(1)
             pcall(keypress, PVE_E_KEY); task.wait(1); pcall(keyrelease, PVE_E_KEY)
-            queued = waitForHolderPrefix(holderFrame, QUEUE_PREFIX, 2)
-            if not queued then print("[PvE] Not queued yet, retrying...") end
+
+            -- Poll for either a successful queue or "already in mission" notice
+            local elapsed, step = 0, 1/60
+            local gotQueue, gotAlready = false, false
+            while elapsed < 2 do
+                for _, child in ipairs(holderFrame:GetChildren()) do
+                    if child:IsA("Frame") then
+                        if child.Name:sub(1, #QUEUE_PREFIX) == QUEUE_PREFIX then
+                            gotQueue = true; break
+                        elseif child.Name:sub(1, #ALREADY_PREFIX) == ALREADY_PREFIX then
+                            gotAlready = true; break
+                        end
+                    end
+                end
+                if gotQueue or gotAlready then break end
+                task.wait(step); elapsed = elapsed + step
+            end
+
+            if gotQueue then
+                queued = true
+            elseif gotAlready then
+                print("[PvE] Already in active mission — scanning for existing targets/questbrick...")
+
+                -- Scan for up to 5 seconds for active mission content
+                local foundContent = false
+                local scanEnd = tick() + 5
+                while tick() < scanEnd do
+                    if #getPveTargets() > 0 or hasActiveQuestbrick() then
+                        foundContent = true; break
+                    end
+                    task.wait(0.25)
+                end
+
+                if foundContent then
+                    print("[PvE] Found active mission content — rejoining mid-mission.")
+                    queued = true
+                else
+                    -- Nothing found: Esc → R → Enter to force-respawn out of stuck state
+                    print("[PvE] No active content found — Esc → R → Enter to reset...")
+                    pcall(keypress, 0x1B);  task.wait(0.1); pcall(keyrelease, 0x1B) -- Esc
+                    task.wait(0.5)
+                    pcall(keypress, 0x52);  task.wait(0.1); pcall(keyrelease, 0x52) -- R
+                    task.wait(0.5)
+                    pcall(keypress, 0x0D);  task.wait(0.1); pcall(keyrelease, 0x0D) -- Enter
+                    task.wait(2) -- give time for respawn before retrying
+                end
+            else
+                print("[PvE] Not queued yet, retrying...")
+            end
         end
         if not state.alive then break end
         print("[PvE] Queued! Detecting mission type...")
@@ -429,24 +496,7 @@ local function startPvE(state)
 
         -- First pass: look for a questbrick within 8 seconds
         while state.alive and scanElapsed < scanTimeout do
-            local foundQB = false
-            pcall(function()
-                for _, qb in ipairs(Workspace.Effects:GetChildren()) do
-                    local isKira = false
-                    pcall(function()
-                        local title = qb["Quest Marker"].Image.Title
-                        if title and title.Text and title.Text:find("Yoshikage Kira") then
-                            isKira = true
-                        end
-                    end)
-                    if not isKira then
-                        local pos = nil
-                        pcall(function() pos = qb.questbrick.Position end)
-                        if pos then foundQB = true end
-                    end
-                end
-            end)
-            if foundQB then
+            if hasActiveQuestbrick() then
                 isExterminate = false
                 print("[PvE] Questbrick found — quest mission.")
                 break
@@ -481,7 +531,7 @@ local function startPvE(state)
                 end
             end)
 
-            -- Spam 1 and 2 keys while fighting
+            -- Spam 1 and 2 keys while fighting, plus R/Z/X/C if Anubis is summoned
             local ONE_PVE = 0x31
             local TWO_PVE = 0x32
             local spamActive = { alive = true }
@@ -489,6 +539,13 @@ local function startPvE(state)
                 while spamActive.alive and state.alive do
                     pcall(keypress, ONE_PVE); task.wait(0.05); pcall(keyrelease, ONE_PVE); task.wait(0.05)
                     pcall(keypress, TWO_PVE); task.wait(0.05); pcall(keyrelease, TWO_PVE); task.wait(0.05)
+                    local currentStand = getSummonedStand()
+                    if currentStand and currentStand:find("Anubis") then
+                        pcall(keypress, 0x52); task.wait(0.05); pcall(keyrelease, 0x52); task.wait(0.05)
+                        pcall(keypress, 0x5A); task.wait(0.05); pcall(keyrelease, 0x5A); task.wait(0.05)
+                        pcall(keypress, 0x58); task.wait(0.05); pcall(keyrelease, 0x58); task.wait(0.05)
+                        pcall(keypress, 0x43); task.wait(0.05); pcall(keyrelease, 0x43); task.wait(0.05)
+                    end
                 end
             end)
 
