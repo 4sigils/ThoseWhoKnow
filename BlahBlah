@@ -1448,7 +1448,7 @@ task.spawn(function()
     end
     if #ordered == 4 then
         for i = 1, 4 do tabs[i] = ordered[i] end
-z
-        Win._openTab = ordered[1]c1
+
+        Win._openTab = ordered[1]
     end
 end)
