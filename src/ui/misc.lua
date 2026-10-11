@@ -5,7 +5,7 @@ local Reg = C.Reg
 local sec = C.Tabs.misc:AddSection("Removals", "Strip effects and obstacles out of the world.", { Column = "left" })
 Reg("remove_winds", sec:AddToggle({
     Title = "Remove Winds",
-    Tooltip = "Moves the SuperWall parts in Layer2Floor1 far below the map. Puts them back when turned off.",
+    Tooltip = "Moves the SuperWall parts in Layer2Floor1 far below the map (puts them back when turned off), removes your WindPusher, and turns you to face strong wind so it can't push you back.",
     Default = false,
     ConfigKey = "deepwoken.misc.removeWinds",
 }))
