@@ -139,6 +139,88 @@ do
             wasOn = on
         end
     end)
+
+    -- WIND PUSHER + STRONG WIND (same toggle): runs every frame while Remove Winds is on.
+    --  * WindPusher in the root part is removed (Parent = nil, then Destroy, then zeroed out as a last resort,
+    --    since Parent = nil may not take effect on this executor).
+    --  * While the StrongWind effect is active and workspace.Thrown.WindSide exists, the root part is turned
+    --    to face the wind direction so you can walk through it.
+    -- The original snippet's `is_chime` check was dropped (it isn't defined in this script).
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local effectReplicator, effectCheckedAt = nil, 0
+
+    -- EffectReplicator: a global if the executor exposes one, otherwise the game's own module
+    local function getEffectReplicator()
+        local env = type(getgenv) == "function" and getgenv() or nil
+        if env and type(env.EffectReplicator) == "table" then return env.EffectReplicator end
+        if effectReplicator then return effectReplicator end
+        if os.clock() < effectCheckedAt then return nil end
+        effectCheckedAt = os.clock() + 5
+        local module = ReplicatedStorage:FindFirstChild("EffectReplicator")
+        local req = (env and env.require) or require
+        if module and type(req) == "function" then
+            local ok, result = pcall(req, module)
+            if ok and type(result) == "table" then effectReplicator = result end
+        end
+        return effectReplicator
+    end
+
+    local function removeWindPusher(root)
+        local pusher = root:FindFirstChild("WindPusher")
+        if not pusher then return end
+
+        pcall(function() pusher.Parent = nil end)
+        if root:FindFirstChild("WindPusher") ~= pusher then return end
+
+        pcall(function() pusher:Destroy() end)
+        if root:FindFirstChild("WindPusher") ~= pusher then return end
+
+        for _, prop in ipairs({ "MaxForce", "Force", "Velocity" }) do
+            pcall(function() pusher[prop] = Vector3.new(0, 0, 0) end)
+        end
+    end
+
+    local function WindStep()
+        local lp = Players.LocalPlayer
+        local char = lp and lp.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        removeWindPusher(root)
+
+        local er = getEffectReplicator()
+        if not er then return end
+
+        local effect = er:FindEffect("StrongWind")
+        local windDir = effect and effect.Value
+        if not windDir then return end
+
+        local thrown = workspace:FindFirstChild("Thrown")
+        if not (thrown and thrown:FindFirstChild("WindSide")) then return end
+
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+
+        local cf = CFrame.new(Vector3.new(), windDir)
+        local windPos = (CFrame.new(camera.CFrame.Position) * cf * CFrame.new(3, -5, 50)).Position
+        root.CFrame = CFrame.new(root.Position, Vector3.new(windPos.X, root.Position.Y, windPos.Z))
+    end
+
+    task.spawn(function()
+        local cWinds, lastErr = Controls.remove_winds, nil
+        while Nexa:IsAlive() do
+            if cWinds.Value then
+                local ok, err = pcall(WindStep)
+                if not ok and err ~= lastErr then
+                    lastErr = err
+                    warn("[Deepwoken] wind step error: " .. tostring(err))
+                end
+                task.wait()
+            else
+                task.wait(0.25)
+            end
+        end
+    end)
 end
 
 -- NO SHADOWS: the GlobalShadows byte on Lighting is set to 0 (offset from the offsets list when it has
