@@ -3,21 +3,23 @@
 
     Run this single file from your executor:
 
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/4sigils/Deepwoken/refs/heads/main/main.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/4sigils/ThoseWhoKnow/refs/heads/main/main.lua"))()
 
     Every file under src/ is downloaded, compiled and called with the shared context table `C` as its
     first vararg (`local C = ...`). Modules talk to each other only through `C`.
 
     Optional globals (set them BEFORE running this file):
         getgenv().DEEPWOKEN_BASE  = "https://raw.githubusercontent.com/<user>/<repo>/refs/heads/<branch>/"
+        getgenv().DEEPWOKEN_DATA_BASE = "..."      -- where Animations.lua / IgnoredAnimations.lua live (defaults to the Deepwoken repo)
         getgenv().DEEPWOKEN_LOCAL = "Deepwoken/"   -- load src/ from your executor's workspace folder instead of GitHub
 ]]
 
 local env = (type(getgenv) == "function" and getgenv()) or _G
 
 local C = {}
-C.BASE  = env.DEEPWOKEN_BASE or "https://raw.githubusercontent.com/4sigils/Deepwoken/refs/heads/main/"
+C.BASE  = env.DEEPWOKEN_BASE or "https://raw.githubusercontent.com/4sigils/ThoseWhoKnow/refs/heads/main/"
 C.LOCAL = env.DEEPWOKEN_LOCAL
+C.DATA_BASE = env.DEEPWOKEN_DATA_BASE or "https://raw.githubusercontent.com/4sigils/Deepwoken/refs/heads/main/"
 
 function C.fetch(path)
     if C.LOCAL and type(readfile) == "function" then
